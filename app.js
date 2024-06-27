@@ -18,6 +18,7 @@ HTTP Methods:
 
 const express = require("express");
 const morgan = require("morgan");
+const { Database } = require("@sqlitecloud/drivers");
 
 const app = express();
 app.use(express.static("./static"));
@@ -35,24 +36,54 @@ app.use(express.urlencoded({ extended: false}));
 
 app.use(morgan("dev"));
 
+
+
+async function connectDB(query){
+  const database = new Database(
+    "sqlitecloud://cvdzea0yik.sqlite.cloud:8860?apikey=XTsZa9UKykWyKUJgz6pmVXHZJQVvLFz2Zf7MWe2CwIQ"
+  );
+  await database.sql("USE DATABASE Pedidos");
+  resultado = await database.sql(query);
+  return resultado;
+}
+
+
 let pedido = [];
-pedido.push({ id_pedido: 1, cliente: 1, pedido:"taza de polímero de paw patrol con nombre Cinthia" });
-pedido.push({ id_pedido: 2, cliente: 24, pedido:"set de jardín" });
-pedido.push({ id_pedido: 3, cliente: 32, pedido:"remera de rock" });
-pedido.push({ id_pedido: 4, cliente: 19, pedido:"stickers" });
+pedido.push({ idPedido: 1, idCliente: 1, pedido:"taza de polímero de paw patrol con nombre Cinthia" });
+pedido.push({ idPedido: 2, idCliente: 24, pedido:"set de jardín" });
+pedido.push({ idPedido: 3, idCliente: 32, pedido:"remera de rock" });
+pedido.push({ idPedido: 4, idCliente: 19, pedido:"stickers" });
 
 //pedidos
+/* 
 app.get("/pedidos", (req, res) => {
   res.json(pedido);
 });
+*/
+app.get("/pedidos", (req, res) => {
+  const query = "SELECT * FROM pedido";
+  const resultado = connectDB(query);
+  res.send(resultado);
+});
 
-
-//envío de pedidos
+//envío de pedidos 
+//adaptar a la base de datos
+/*datos para recopilar del body
+{
+  "cliente": 4,
+  "pedido": "set de jardín",
+  "estado": "false"
+}
+ */
 app.post("/envio_pedido", (req, res) => {
-  const nuevopedido = { ...req.body, id_pedido: pedido.at(-1).id_pedido +1};
-  pedido.push(nuevopedido);
-  res.send(nuevopedido);
+  const nuevoPedido = { ...req.body, idPedido: pedido.at(-1).idPedido +1};
+  pedido.push(nuevoPedido);
+  res.send(nuevoPedido);
+});
 
+app.get("/envio_pedido", (req, res) => {
+  const nuevoPedido =
+  res.send(nuevoPedido);
 });
 
 
@@ -60,12 +91,12 @@ app.post("/envio_pedido", (req, res) => {
 app.put("/actualizar_pedido/:id_pedido", (req, res) => {
 const nuevoPedido = req.body;
 const pedidoEncontrado = pedido.find(
-  (p) => p.id_pedido === parseInt(req.params.id_pedido)
+  (p) => p.idPedido === parseInt(req.params.idPedido)
 );
 if(!pedidoEncontrado)
 return res.status(404).json({message: "pedido no encontrado"});
 pedido.map((p) => 
-p.id_pedido === parseInt(req.params.id_pedido) ? { ...p, ...nuevoPedido} : p
+p.idPedido === parseInt(req.params.idPedido) ? { ...p, ...nuevoPedido} : p
 );
   res.json({
     message: "pedido actualizado"
@@ -76,11 +107,11 @@ p.id_pedido === parseInt(req.params.id_pedido) ? { ...p, ...nuevoPedido} : p
 //eliminar pedidos
 app.delete("/eliminar_pedido/:id_pedido", (req, res) => {
   const pedidoEncontrado = pedido.find( 
-    (p) => p.id_pedido === parseInt(req.params.id_pedido)
+    (p) => p.idPedido === parseInt(req.params.idPedido)
   );
   if(!pedidoEncontrado)
   return res.status(404).json({message: "pedido no encontrado"});
-pedido = pedido.filter((p) => p.id_pedido !== parseInt(req.params.id_pedido));
+pedido = pedido.filter((p) => p.idPedido !== parseInt(req.params.idPedido));
 res.sendStatus(204);
 });
 
